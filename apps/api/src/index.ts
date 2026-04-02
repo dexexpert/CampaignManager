@@ -2,7 +2,10 @@ import cors from "cors";
 import express from "express";
 import { env, requireEnv } from "./env.js";
 import { authRouter } from "./auth/authRoutes.js";
+import { requireAuth } from "./auth/authMiddleware.js";
 import { errorMiddleware } from "./http.js";
+import { campaignRouter } from "./campaigns/campaignRoutes.js";
+import { recipientRouter } from "./recipients/recipientRoutes.js";
 
 requireEnv();
 
@@ -18,6 +21,9 @@ app.use(
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/auth", authRouter);
+app.use("/campaigns", requireAuth, campaignRouter);
+app.use("/recipients", requireAuth, recipientRouter);
+app.use("/recipient", requireAuth, recipientRouter);
 
 app.use(errorMiddleware);
 
