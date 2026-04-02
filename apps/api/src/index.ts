@@ -1,6 +1,8 @@
 import cors from "cors";
 import express from "express";
 import { env, requireEnv } from "./env.js";
+import { authRouter } from "./auth/authRoutes.js";
+import { errorMiddleware } from "./http.js";
 
 requireEnv();
 
@@ -15,10 +17,9 @@ app.use(
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
-  res.status(500).json({ error: "internal_error" });
-});
+app.use("/auth", authRouter);
+
+app.use(errorMiddleware);
 
 app.listen(env.port, () => {
   console.log(`API listening on :${env.port}`);
