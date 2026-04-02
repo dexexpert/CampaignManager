@@ -10,10 +10,9 @@ import {
 } from "./campaignSchemas.js";
 import { getCampaignStats } from "./campaignStats.js";
 import { simulateSendCampaign } from "./sendSimulation.js";
+import { assertDraft, assertNotSentOrSending, parseAndValidateFutureIsoDatetime, type CampaignStatus } from "./rules.js";
 
 export const campaignRouter = Router();
-
-type CampaignStatus = "draft" | "scheduled" | "sending" | "sent";
 
 campaignRouter.get(
   "/",
@@ -127,7 +126,11 @@ campaignRouter.patch(
     const current = await query(`select status from campaign where id = $1 and created_by = $2`, [id, userId]);
     if (!current.rowCount) return res.status(404).json({ error: "not_found" });
     const status = (current.rows[0] as any).status as CampaignStatus;
-    if (status !== "draft") return res.status(409).json({ error: "campaign_not_editable" });
+    try {
+      assertDraft(status, "campaign_not_editable");
+    } catch (e: any) {
+      return res.status(e.statusCode ?? 409).json({ error: e.message });
+    }
 
     const result = await query(
       `update campaign
@@ -152,7 +155,11 @@ campaignRouter.delete(
     const current = await query(`select status from campaign where id = $1 and created_by = $2`, [id, userId]);
     if (!current.rowCount) return res.status(404).json({ error: "not_found" });
     const status = (current.rows[0] as any).status as CampaignStatus;
-    if (status !== "draft") return res.status(409).json({ error: "campaign_not_deletable" });
+    try {
+      assertDraft(status, "campaign_not_deletable");
+    } catch (e: any) {
+      return res.status(e.statusCode ?? 409).json({ error: e.message });
+    }
 
     await query(`delete from campaign where id = $1 and created_by = $2`, [id, userId]);
     res.status(204).send();
@@ -166,18 +173,21 @@ campaignRouter.post(
     const id = String(req.params.id);
     const body = scheduleCampaignBodySchema.parse(req.body);
 
-    const scheduledAt = new Date(body.scheduledAt);
-    if (!(scheduledAt instanceof Date) || Number.isNaN(scheduledAt.getTime())) {
-      return res.status(400).json({ error: "invalid_scheduled_at" });
-    }
-    if (scheduledAt.getTime() <= Date.now()) {
-      return res.status(400).json({ error: "scheduled_at_must_be_future" });
+    let scheduledAt: Date;
+    try {
+      scheduledAt = parseAndValidateFutureIsoDatetime(body.scheduledAt);
+    } catch (e: any) {
+      return res.status(e.statusCode ?? 400).json({ error: e.message });
     }
 
     const current = await query(`select status from campaign where id = $1 and created_by = $2`, [id, userId]);
     if (!current.rowCount) return res.status(404).json({ error: "not_found" });
     const status = (current.rows[0] as any).status as CampaignStatus;
-    if (status !== "draft") return res.status(409).json({ error: "campaign_not_schedulable" });
+    try {
+      assertDraft(status, "campaign_not_schedulable");
+    } catch (e: any) {
+      return res.status(e.statusCode ?? 409).json({ error: e.message });
+    }
 
     const result = await query(
       `update campaign
@@ -200,8 +210,11 @@ campaignRouter.post(
     if (!current.rowCount) return res.status(404).json({ error: "not_found" });
     const status = (current.rows[0] as any).status as CampaignStatus;
 
-    if (status === "sent") return res.status(409).json({ error: "campaign_already_sent" });
-    if (status === "sending") return res.status(409).json({ error: "campaign_already_sending" });
+    try {
+      assertNotSentOrSending(status);
+    } catch (e: any) {
+      return res.status(e.statusCode ?? 409).json({ error: e.message });
+    }
 
     // kick off async simulation
     setTimeout(() => {
