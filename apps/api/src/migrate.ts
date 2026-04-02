@@ -14,12 +14,20 @@ async function main() {
   const client = await pool.connect();
   try {
     await client.query("begin");
+    await client.query(`
+      create table if not exists migrations (
+        id serial primary key,
+        filename text not null unique,
+        applied_at timestamptz not null default now()
+      )
+    `);
+
     const files = (await readdir(migrationsDir))
       .filter((f) => f.endsWith(".sql"))
       .sort((a, b) => a.localeCompare(b));
 
     for (const filename of files) {
-      const already = await client.query<{ filename: string }>(
+      const already = await client.query(
         "select filename from migrations where filename = $1",
         [filename],
       );
