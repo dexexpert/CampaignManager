@@ -5,6 +5,12 @@ Full-stack Mini Campaign Manager (email campaign creation + tracking simulation)
 - `apps/api`: Node.js + Express + PostgreSQL (raw SQL via `pg`) + JWT auth + Zod validation
 - `apps/web`: React + TypeScript (Vite) + Redux Toolkit + React Query
 
+## Demo recording
+
+**For testers:** short screen recording of the app (login, list campaigns, create campaign, schedule/send, stats).
+
+→ **[Watch the demo](REPLACE_WITH_YOUR_RECORDING_LINK)** — replace `REPLACE_WITH_YOUR_RECORDING_LINK` with your Loom, YouTube, Google Drive, or Notion link before you push the repo.
+
 ## Quickstart
 
 ### 1) Install deps
