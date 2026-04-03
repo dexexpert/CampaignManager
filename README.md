@@ -9,7 +9,7 @@ Full-stack Mini Campaign Manager (email campaign creation + tracking simulation)
 
 **For testers:** short screen recording of the app (login, list campaigns, create campaign, schedule/send, stats).
 
-→ **[Watch the demo](REPLACE_WITH_YOUR_RECORDING_LINK)** — replace `REPLACE_WITH_YOUR_RECORDING_LINK` with your Loom, YouTube, Google Drive, or Notion link before you push the repo.
+→ **[Watch the demo on Loom](https://www.loom.com/share/1c4f63e963224580bbc25ed21d0d06df)**
 
 ## Quickstart
 
